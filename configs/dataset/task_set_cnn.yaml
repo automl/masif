@@ -1,0 +1,156 @@
+defaults: # fixme: override base.yaml defaults wrt dataset - dataset/lcbench!
+  - dataset_meta: null
+  - lc_meta: multi_slice_np
+
+name: task_set_cnn
+
+path:
+  algo_meta: ${dir_data_processed}/${dataset.name}/config_subset.csv
+  # data_meta: ${dir_data_processed}/${dataset.name}/meta_features.csv
+  lc_meta: ${dir_data_processed}/${dataset.name}/raw.npy
+
+
+train_dataset_class: # -----------------------------------------------------------------------------
+  _target_: imfas.data.Dataset_Join_Dmajor
+  #  meta_algo: ${dataset.algo_meta}
+  learning_curves: # ${dataset.lc_meta}
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: imfas.data.lc_dataset.DatasetTaskSet
+    path: ${dataset.path.lc_meta}
+    n_datasets: 76
+    n_algos: 1000
+    ctype: 'train'
+
+    transforms:
+      _target_: imfas.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: imfas.data.preprocessings.table_transforms.Convert
+        - _target_: imfas.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+    metric: Train/val_cross_entropy
+
+
+
+valid_dataset_class: # -----------------------------------------------------------------------------
+  _target_: imfas.data.Dataset_Join_Test
+  learning_curves: # ${dataset.lc_meta}  # validation
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: imfas.data.lc_dataset.DatasetTaskSet
+    path: ${dataset.path.lc_meta}
+    n_datasets: 76
+    n_algos: 1000
+    ctype: 'valid'
+
+    transforms:
+      _target_: imfas.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: imfas.data.preprocessings.table_transforms.Convert
+        - _target_: imfas.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+    metric: Train/val_cross_entropy
+
+  test_curves: # ${dataset.lc_meta}
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: imfas.data.lc_dataset.DatasetTaskSet
+    path: ${dataset.path.lc_meta}
+    n_datasets: 76
+    n_algos: 1000
+    ctype: 'test'
+
+    transforms:
+      _target_: imfas.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: imfas.data.preprocessings.table_transforms.Convert
+        - _target_: imfas.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+
+    metric: Train/test_cross_entropy
+
+
+
+test_dataset_class: # ------------------------------------------------------------------------------
+  _target_: imfas.data.Dataset_Join_Test
+  # meta_dataset: ${dataset.dataset_meta}
+  #  meta_algo: ${dataset.algo_meta}
+  learning_curves: # ${dataset.lc_meta}  # validation
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: imfas.data.lc_dataset.DatasetTaskSet
+    n_datasets: 100
+    n_algos: 1000
+    path: ${dataset.path.lc_meta}
+    ctype: 'valid'
+
+    transforms:
+      _target_: imfas.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: imfas.data.preprocessings.table_transforms.Convert
+        - _target_: imfas.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+    metric: Train/val_cross_entropy
+
+  test_curves: # ${dataset.lc_meta}
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: imfas.data.lc_dataset.DatasetTaskSet
+    n_datasets: 76
+    n_algos: 1000
+    path: ${dataset.path.lc_meta}
+    ctype: 'test'
+
+    transforms:
+      _target_: imfas.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: imfas.data.preprocessings.table_transforms.Convert
+        - _target_: imfas.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+
+    metric: Train/test_cross_entropy
+
+
+# Dataloaders ------------------------------------------------------------------------------------
+train_dataloader_class:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 5  # introduce randomness for iterative algos
+  shuffle: True
+  num_workers: ${num_workers}
+
+valid_dataloader_class:
+  _target_: torch.utils.data.DataLoader
+  batch_size: ${dynamically_computed.n_datasets} # average over validation datasets in one go
+  shuffle: True
+  num_workers: ${num_workers}
+
+test_dataloader_class:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 1 # average over test datasets in one go
+  shuffle: False
+  num_workers: ${num_workers}
+
+
+# (Raw Dataset choices) ----------------------------------------------------------------------------
+
+slices: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+#   [ 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 51 ] #  FIXME: ${range:1,51,1} does not work
+
+# fixme: look at multi-slice behaviour
+
+
+dataset_raw:
+  _target_: imfas.data.lcbench.raw_pipe.raw_pipe
+
+  #TODO Change to relative
+  dir_data: data
+  extract: data_2k_lw  # json file
+  enable: False # whether to override the preprocessing
+  re_download: False
+  reload_from_downloads: False # will override the '*subset' files
+
+
+  selection:
+    lc_metric: final_test_accuracy #final_test_cross_entropy
+    
+    algo: # fixme: move this to separate yaml
+      _target_: imfas.data.ensemble.topk.ensemble
+      k: 10
+
+    bench: lcbench
+

@@ -1,0 +1,57 @@
+# @package _global_
+
+# The general idea here is, that SuccessiveHalving is a non-parametric, myopic, but
+# learning curve aware algorithm.
+# Since we only ever care for its baseline (test) performance, this pipe is a bit hacky.
+
+#defaults:
+  #- override /train_test_split: trainvalidtest
+
+wandb:
+  group: 'Baseline: SH'
+  job_type: 'sh_eta2'
+  notes: 'Successive Halving'
+  tags:
+    - 'Successive Halving'
+
+device: 'cpu'
+
+model:
+  _target_: masif.models.baselines.successive_halving.SuccessiveHalving
+  eta: 2
+  budgets: ${dataset.slices}
+
+dataset:
+  test_dataloader_class:
+    batch_size: 1 # has to be one for successive halving. aggregate over test set in trainer.evaluate
+    shuffle: False # to know on which dataset in test we perform badly
+
+trainer:
+  run_call:
+    epochs: 0 # since we only need a single test execution anyways (HACK)
+
+    test_loss_fns:
+      spearman:
+        _target_: masif.losses.spearman.SpearmanLoss
+
+      top1_regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 1
+
+      top3_regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 3
+
+      top5_regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 5
+      
+      # top1_regret:
+      #   _target_: masif.evaluation.topkregret.TopkRegret
+      #   k: 1
+    
+      # top3_regret:
+      #   _target_: masif.evaluation.topkregret.TopkRegret
+      #   k: 3
+
+

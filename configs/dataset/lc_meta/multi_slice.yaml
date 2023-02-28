@@ -1,0 +1,18 @@
+_target_: masif.data.Dataset_LC
+path: ${dataset.path.lc_meta}
+
+# the important part!
+transforms:
+  _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+  modulelist:
+    #    - _target_: masif.data.preprocessings.nan_transforms.Column_Mean # FIXME: why do we mean impute here?
+    - _target_: masif.data.preprocessings.table_transforms.Convert # novelty
+    # - _target_: masif.data.preprocessings.table_transforms.Scalar
+    - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+      slices: ${dataset.slices}
+    # - _target_: masif.data.preprocessings.tensor_transforms.LossScalar
+
+# fixme: currently LCbecnch and yahpo differ in Dataset_LC.metric behaviour
+#  lcbench stores the entire tensor including all metrics, so we need to select from them
+#  yahpo stores only the loss iteself, so there is no metric column to select.
+#metric: ${dataset.dataset_raw.selection.lc_metric}

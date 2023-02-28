@@ -1,0 +1,69 @@
+# @package _global_
+
+
+#Workshop paper version of the masif model: https://arxiv.org/pdf/2206.03130.pdf
+#MLP1(D) = h_0 -> for_{i=0,..k}  LSTM(h_i, f_i)=h_{i+1}  -> MLP2(h_k) = output
+#
+#D: dataset meta-features
+#f_i: performances of all n (=algo_dim) algorithms on the i-th fidelity
+#
+#The dimensions of the model are the following:
+#MLP1: input_dim -> mlp1_hidden_dims -> h_dim
+#LSTM: h_dim -> h_dim
+#MLP2: h_dim -> mlp2_hidden_dims -> algo_dim
+
+defaults:
+  - /model: masif_wp
+
+
+wandb:
+  notes: 'masif wp'
+
+
+seed: 1
+
+dataset: # TODO : make this the standard protocol !
+  train_dataset_class:
+    _target_: masif.data.Dataset_Join_Dmajor
+    masking_fn:
+      _target_: masif.utils.masking.mask_lcs_randomly  # To activate masking protocol
+      _partial_: True
+
+  #  valid_dataset_class:
+  #    _target_: masif.data.Dataset_Join_Test
+  #    masking_fn:
+  #      _target_: masif.utils.masking.mask_lcs_to_max_fidelity  # To activate masking protocol
+  #      max_fidelity: 5  # How many indicies in the learning curve are available!
+  #      _partial_: True
+
+
+
+  train_dataloader_class:
+    shuffle: True
+    batch_size: 5
+
+  valid_dataloader_class:
+    shuffle: False
+    batch_size: 1 # since there is only one validation curve
+
+  test_dataloader_class:
+    shuffle: False
+    batch_size: 1 # since there is only one test curve
+
+
+
+trainer:
+  trainerobj:
+    _target_: masif.trainer.base_trainer.BaseTrainer # todo switch out for Slice evaluator!
+
+    optimizer:
+      _target_: torch.optim.Adam
+      lr: 0.001
+      _partial_: True
+
+  run_call:
+    epochs: 5
+    log_freq: 5         # wandb mistakes single value additions as media files, so log_freq helps mitigate that
+    train_loss_fn:
+      _target_: masif.losses.spearman.SpearmanLoss
+    #      _target_: masif.losses.plackett_luce.PlackettLuceLoss

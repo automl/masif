@@ -1,0 +1,24 @@
+_target_: masif.models.transformer2.masifTransformerMLP
+
+
+dmetaf_dim: 100
+
+joint_dim: ${add2:${dynamically_computed.n_data_meta_features}, ${dmetaf_dim}}
+
+transformer_algos:
+  _target_: torch.nn.TransformerEncoder
+
+  num_layers: 2 # how many transformer layers to stack
+  encoder_layer:
+    _target_: torch.nn.TransformerEncoderLayer
+    d_model: 1  # number of algorithms
+    nhead: 1 # attention heads  d_model / nhead = 10 must be devisible
+    dim_feedforward: 100
+    dropout: 0.1
+    activation: relu
+
+    batch_first: True
+    norm_first: False
+    device: ${device}
+
+

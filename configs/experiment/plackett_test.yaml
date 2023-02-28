@@ -1,0 +1,38 @@
+# @package _global_
+
+# MLP(D) ---> PlackettLuceLoss
+defaults:
+  - /model: mlp_D
+
+
+wandb:
+  notes: 'plackett test'
+
+
+dataset:
+  train_dataset_class:
+    _target_: masif.data.Dataset_Join_Dmajor
+    masking_fn:
+      _target_: masif.utils.masking.mask_lcs_randomly
+      _partial_: True
+
+  test_dataset_class:
+    _target_: masif.data.Dataset_Join_Dmajor
+
+  train_dataloader_class:
+    batch_size: 10
+    shuffle: True
+
+  test_dataloader_class:
+    batch_size: 10
+    shuffle: False
+
+trainer:
+
+  run_call:
+    epochs: 1000
+    train_loss_fn:
+      _target_: masif.losses.plackett_luce.PlackettLuceLoss
+      k: 10
+    #      _target_: masif.losses.spearman.SpearmanLoss
+

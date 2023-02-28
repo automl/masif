@@ -1,0 +1,22 @@
+_target_: masif.data.algorithm_meta_features.AlgorithmMetaFeatures
+path: ${dataset.path.algo_meta}
+index_col: 0 # pd.read argument
+
+# the important part!
+transforms:
+  _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+  # path: some/path - we might want to automate and structure it
+  modulelist:
+    - _target_: masif.data.preprocessings.table_transforms.Convert
+      columns:
+        - 'replace'
+      dtype: 'int'
+    - _target_: masif.data.preprocessings.nan_transforms.Zero_fill
+    - _target_: masif.data.preprocessings.table_transforms.Drop
+      columns: # fixme: do not drop categorical features in algo meta features
+        - respect.unordered.factors
+        - splitrule
+        - task_id
+
+    - _target_: masif.data.preprocessings.table_transforms.ToTensor
+    - _target_: masif.data.preprocessings.tensor_transforms.ScaleStd

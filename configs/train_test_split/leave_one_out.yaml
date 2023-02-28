@@ -1,0 +1,10 @@
+#    Leave one k out cross validation, where k is the number of elements in idx
+#    This method allows to be explicit about which dataset is left out, when we want to run
+#    the experiments from command line. The idea is to run the experiment with a single holdout
+#    in one run with a fixed seed. Do n runs each with a different holdout and seed!
+#    Override the classical split from cmd with e.g.:
+#   +experiment=masif_wp seed=1 train_test_split=leave_one_out train_test_split.idx=[1]
+#   +experiment=masif_wp seed=2 train_test_split=leave_one_out train_test_split.idx=[2] ...
+
+_target_: masif.utils.traintestsplit.leave_one_out
+idx: [ 0 ] # ${remainder:${seed},${dynamically_computed.n_datasets}} # TODO, when running the experiment run this for the length of datasets, each with a new (seed, idx) pair!

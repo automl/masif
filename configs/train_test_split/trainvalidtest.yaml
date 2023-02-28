@@ -1,0 +1,3 @@
+_target_: masif.utils.traintestsplit.train_valid_test_split
+valid_share: 0.1
+test_share: 0.1

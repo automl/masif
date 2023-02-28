@@ -1,0 +1,43 @@
+# @package _global_
+
+# Transformer model.
+# d = MLP_d(D), t = TransformerEncoder(lcs_DA), output = MLP(concat(d,t))
+
+defaults:
+  - /model: transformermlp
+
+
+wandb:
+  group: 'masif_transformer2'
+  job_type: 'train'
+  notes: 'masif transformer2'
+  tags:
+    - 'masif transformer2'
+
+
+dataset:
+  train_dataset_class:
+    _target_: masif.data.Dataset_Join_Dmajor
+    # enable masking
+    masking_fn:
+      _partial_: True
+      _target_: masif.utils.masking.mask_lcs_randomly
+
+
+  train_dataloader_class:
+    batch_size: 1
+
+  valid_dataloader_class:
+    batch_size: 1
+
+  test_dataloader_class:
+    batch_size: 1
+
+trainer:
+  run_call:
+    epochs: 10 # FIXME: multiply by (intended batch size to make comparable)
+    log_freq: 5         # wandb mistakes single value additions as media files, so log_freq helps mitigate that
+    train_loss_fn:
+      _target_: masif.losses.spearman.SpearmanLoss
+
+seed: 2

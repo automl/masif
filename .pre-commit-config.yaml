@@ -1,0 +1,51 @@
+repos:
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      # - id: isort
+      #   name: isort imports masif
+      #   files: masif
+
+      - id: isort
+        name: isort imports tests
+        files: tests
+
+  # - repo: https://github.com/ambv/black
+  #   rev: 22.1.0
+  #   hooks:
+  #     # - id: black
+  #     #   name: black formatter masif
+  #     #   files: masif
+
+  #     - id: black
+  #       name: black formatter tests
+  #       files: tests
+
+  #     - id: black
+  #       name: black formatter examples
+  #       files: examples
+
+  # - repo: https://github.com/pycqa/pydocstyle
+  #   rev: 6.1.1
+  #   hooks:
+  #     - id: pydocstyle
+  #       files: masif
+  #       additional_dependencies: ["toml"] # Needed to parse pyproject.toml
+
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v0.930
+  #   hooks:
+  #     - id: mypy
+  #       name: mypy masif
+  #       files: masif
+
+  # - repo: https://gitlab.com/pycqa/flake8
+  #   rev: 4.0.1
+  #   hooks:
+  #     - id: flake8
+  #       name: flake8 masif
+  #       files: masif
+
+  #     - id: flake8
+  #       name: flake8 tests
+  #       files: tests

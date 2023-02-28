@@ -1,0 +1,218 @@
+defaults: # fixme: override base.yaml defaults wrt dataset - dataset/lcbench!
+  - dataset_meta: lcbench_minimal
+  - lc_meta: multi_slice
+  - algo_meta: lcbench_minimal
+
+name: LCBench
+
+path:
+  algo_meta: ${dir_data_processed}/${dataset.name}/config_subset.csv
+  data_meta: ${dir_data_processed}/${dataset.name}/meta_features.csv
+  lc_meta: ${dir_data_processed}/${dataset.name}/logs_subset.h5
+
+
+
+train_dataset_class: # -----------------------------------------------------------------------------
+  _target_: masif.data.Dataset_Join_Dmajor
+  meta_dataset: ${dataset.dataset_meta}
+  meta_algo: ${dataset.algo_meta}
+  disable_meta_dataset: True
+  disable_meta_algo: True
+  learning_curves: # ${dataset.lc_meta}
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: masif.data.Dataset_LC
+    path: ${dataset.path.lc_meta}
+
+    transforms:
+      _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: masif.data.preprocessings.table_transforms.Convert
+        - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+    metric: Train/test_cross_entropy
+
+
+valid_dataset_class: # -----------------------------------------------------------------------------
+  _target_: masif.data.Dataset_Join_Test
+  meta_dataset: ${dataset.dataset_meta}
+  meta_algo: ${dataset.algo_meta}
+  disable_meta_dataset: True
+  disable_meta_algo: True
+  learning_curves: # ${dataset.lc_meta}  # validation
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: masif.data.Dataset_LC
+    path: ${dataset.path.lc_meta}
+
+    transforms:
+      _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: masif.data.preprocessings.table_transforms.Convert
+        - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+    metric: Train/test_cross_entropy
+
+  test_curves: # ${dataset.lc_meta}
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: masif.data.Dataset_LC
+    path: ${dataset.path.lc_meta}
+
+    transforms:
+      _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: masif.data.preprocessings.table_transforms.Convert
+        - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+
+    metric: Train/test_cross_entropy
+
+
+
+test_dataset_class: # ------------------------------------------------------------------------------
+  _target_: masif.data.Dataset_Join_Test
+  meta_dataset: ${dataset.dataset_meta}
+  meta_algo: ${dataset.algo_meta}
+  disable_meta_dataset: True
+  disable_meta_algo: True
+  learning_curves: # ${dataset.lc_meta}  # validation
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: masif.data.Dataset_LC
+    path: ${dataset.path.lc_meta}
+
+    transforms:
+      _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: masif.data.preprocessings.table_transforms.Convert
+        - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+    metric: Train/val_cross_entropy
+
+  test_curves: # ${dataset.lc_meta}
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: masif.data.Dataset_LC
+    path: ${dataset.path.lc_meta}
+
+    transforms:
+      _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: masif.data.preprocessings.table_transforms.Convert
+        - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+
+    metric: Train/test_cross_entropy
+
+
+# Dataloaders ------------------------------------------------------------------------------------
+train_dataloader_class:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 5  # introduce randomness for iterative algos
+  shuffle: True
+  num_workers: ${num_workers}
+
+valid_dataloader_class:
+  _target_: torch.utils.data.DataLoader
+  batch_size: ${dynamically_computed.n_datasets} # average over validation datasets in one go
+  shuffle: True
+  num_workers: ${num_workers}
+
+test_dataloader_class:
+  _target_: torch.utils.data.DataLoader
+  batch_size: ${dynamically_computed.n_datasets} # average over test datasets in one go
+  shuffle: False
+  num_workers: ${num_workers}
+
+
+# (Raw Dataset choices) ----------------------------------------------------------------------------
+
+slices: [ 1,  2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51 ]
+#   [ 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 51 ] #  FIXME: ${range:1,51,1} does not work
+
+# fixme: look at multi-slice behaviour
+
+
+dataset_raw:
+  _target_: masif.data.lcbench.raw_pipe.raw_pipe
+
+  #TODO Change to relative
+  dir_data: data
+  extract: data_2k_lw  # json file
+  enable: False # whether to override the preprocessing
+  re_download: True
+  reload_from_downloads: False # will override the '*subset' files
+
+
+  selection:
+    lc_metric: Train/test_cross_entropy #final_test_cross_entropy
+    # options :
+    #       'model_parameters', 'final_train_cross_entropy', 'final_train_accuracy',
+    #       'final_train_balanced_accuracy', 'final_val_cross_entropy',
+    #       'final_val_accuracy', 'final_val_balanced_accuracy',
+    #       'final_test_cross_entropy', 'final_test_accuracy',
+    #       'final_test_balanced_accuracy', 'OpenML_task_id', 'test_split',
+    #       'budget', 'seed', 'instances', 'classes', 'features'
+
+    algo: # fixme: move this to separate yaml
+      _target_: masif.data.ensemble.topk.ensemble
+      k: 10
+
+    bench: lcbench
+
+
+      #  learning_curves:
+      #    metrics:
+      #      - Train/loss
+      #      - Train/lr
+      #      - Train/test_balanced_accuracy
+      #      - Train/test_cross_entropy
+      #      - Train/test_result
+      #      - Train/train_accuracy
+      #      - Train/train_balanced_accuracy
+      #      - Train/train_cross_entropy
+      #      - Train/val_accuracy
+    #      - Train/val_balanced_accuracy
+    #      - Train/val_cross_entropy
+    #      - epoch
+    #      - time
+
+    # options:
+    #       'Train/loss',
+    #       'Train/lr',
+    #       'Train/test_balanced_accuracy', 'Train/test_cross_entropy',
+    #       'Train/test_result', 'Train/train_accuracy',
+    #       'Train/train_balanced_accuracy', 'Train/train_cross_entropy',
+    #       'Train/val_accuracy', 'Train/val_balanced_accuracy',
+    #       'Train/val_cross_entropy', 'epoch', 'time'
+    #       'Train/gradient_max', 'Train/gradient_mean', 'Train/gradient_median',
+    #       'Train/gradient_norm', 'Train/gradient_q10', 'Train/gradient_q25',
+    #       'Train/gradient_q75', 'Train/gradient_q90', 'Train/gradient_std',
+    #       'Train/layer_wise_gradient_max_layer_0',
+    #       'Train/layer_wise_gradient_max_layer_1',
+    #       'Train/layer_wise_gradient_max_layer_2',
+    #       'Train/layer_wise_gradient_max_layer_3',
+    #       'Train/layer_wise_gradient_mean_layer_0',
+    #       'Train/layer_wise_gradient_mean_layer_1',
+    #       'Train/layer_wise_gradient_mean_layer_2',
+    #       'Train/layer_wise_gradient_mean_layer_3',
+    #       'Train/layer_wise_gradient_median_layer_0',
+    #       'Train/layer_wise_gradient_median_layer_1',
+    #       'Train/layer_wise_gradient_median_layer_2',
+    #       'Train/layer_wise_gradient_median_layer_3',
+    #       'Train/layer_wise_gradient_q10_layer_0',
+    #       'Train/layer_wise_gradient_q10_layer_1',
+    #       'Train/layer_wise_gradient_q10_layer_2',
+    #       'Train/layer_wise_gradient_q10_layer_3',
+    #       'Train/layer_wise_gradient_q25_layer_0',
+    #       'Train/layer_wise_gradient_q25_layer_1',
+    #       'Train/layer_wise_gradient_q25_layer_2',
+    #       'Train/layer_wise_gradient_q25_layer_3',
+    #       'Train/layer_wise_gradient_q75_layer_0',
+    #       'Train/layer_wise_gradient_q75_layer_1',
+    #       'Train/layer_wise_gradient_q75_layer_2',
+    #       'Train/layer_wise_gradient_q75_layer_3',
+    #       'Train/layer_wise_gradient_q90_layer_0',
+    #       'Train/layer_wise_gradient_q90_layer_1',
+    #       'Train/layer_wise_gradient_q90_layer_2',
+    #       'Train/layer_wise_gradient_q90_layer_3',
+    #       'Train/layer_wise_gradient_std_layer_0',
+    #       'Train/layer_wise_gradient_std_layer_1',
+    #       'Train/layer_wise_gradient_std_layer_2',
+    #       'Train/layer_wise_gradient_std_layer_3'

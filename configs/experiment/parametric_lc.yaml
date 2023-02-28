@@ -1,0 +1,26 @@
+# @package _global_
+
+#defaults:
+  #- override /train_test_split: trainvalidtest
+
+
+model:
+  _target_: masif.models.baselines.lcdb_parametric_lc.ParametricLC
+  function: pow2
+  # options
+  #pow2 pow3 log2 exp3 exp2 lin2 vap3 mmf4 wbl4 exp4 expp3 pow4 expd3 logpower3 last1
+  budgets: ${dataset.slices}
+  restarts: 10
+
+wandb:
+  group: 'Baseline: Parametric LC'
+  job_type: 'baseline parametric lc'
+  notes: 'Parametric LC'
+
+device: 'cpu'
+
+
+dataset:
+  test_dataloader_class:
+    batch_size: 1 # has to be one for successive halving. aggregate over test set in trainer.evaluate
+    shuffle: False # to know on which dataset in test we perform badly

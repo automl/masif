@@ -1,0 +1,9 @@
+defaults:
+  - /trainer/basetrainer@_here_ # specialize the basetrainer!
+  - _self_
+
+trainerobj:
+  _target_: masif.trainer.sh_budget_trainer.SHBudgetTrainer
+  sh_model:
+    eta: 2
+    budgets: ${dataset.slices}

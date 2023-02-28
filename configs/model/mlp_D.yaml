@@ -1,0 +1,12 @@
+# model is a mlp accepting dataset_meta_features only: mlp(D)
+
+_target_: masif.models.mlpd.MLPD
+encoder:
+
+  _target_: masif.utils.mlp.MLP
+  hidden_dims:
+    - ${dynamically_computed.n_data_meta_features}
+    - 100
+    - ${dynamically_computed.n_algos}
+  activation: 'relu'
+  readout: True

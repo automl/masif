@@ -1,0 +1,33 @@
+_target_: masif.data.dataset_meta_features.DatasetMetaFeatures
+path: ${dataset.path.data_meta}
+index_col: 0
+
+# the important part!
+transforms:
+  _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+  modulelist:
+    - _target_: masif.data.preprocessings.table_transforms.Drop
+      columns:
+        - Name
+        - EquivalentNumberOfAtts
+        - MaxAttributeEntropy
+        - MaxMutualInformation
+        - MeanAttributeEntropy
+        - MeanMutualInformation
+        - MeanNoiseToSignalRatio
+        - MinAttributeEntropy
+        - MinMutualInformation
+        - Quartile1AttributeEntropy
+        - Quartile1MutualInformation
+        - Quartile2AttributeEntropy
+        - Quartile2MutualInformation
+        - Quartile3AttributeEntropy
+        - Quartile3MutualInformation
+        - NaiveBayesAUC
+        - NaiveBayesErrRate
+        - NaiveBayesKappa
+    - _target_: masif.data.preprocessings.table_transforms.Drop_Constant
+    - _target_: masif.data.preprocessings.nan_transforms.Zero_fill
+    #- _target_: masif.data.preprocessings.table_transforms.Scalar
+    - _target_: masif.data.preprocessings.table_transforms.ToTensor
+    - _target_: masif.data.preprocessings.tensor_transforms.ScaleStd

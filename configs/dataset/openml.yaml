@@ -1,0 +1,125 @@
+defaults: # fixme: override base.yaml defaults wrt dataset - dataset/lcbench!
+  - dataset_meta: lcbench_minimal
+  - lc_meta: multi_slice
+  - algo_meta: NULL
+
+name: openml
+
+path:
+  algo_meta: ${dir_data_processed}/${dataset.name}/conference_tmlr2022_1/ #/config_subset.csv
+  data_meta: ${dir_data_processed}/${dataset.name}/conference_tmlr2022_1/dataset_meta_features.csv
+  lc_meta: ${dir_data_processed}/${dataset.name}/conference_tmlr2022_1/
+
+
+slices: [ 0.05,  0.1, 0.15,  0.2, 0.25,  0.3, 0.35, 0.4, 0.45,  0.5, 0.55, 0.6, 0.65,  0.7, 0.75,  0.8, 0.85,  0.9, 0.95, 1.0 ]
+
+train_dataset_class: # -----------------------------------------------------------------------------
+  _target_: masif.data.Dataset_Join_Dmajor
+  meta_dataset: ${dataset.dataset_meta}
+  #  meta_algo: ${dataset.algo_meta}
+  learning_curves: # ${dataset.lc_meta}
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: masif.data.Dataset_LC
+    path: ${dataset.path.lc_meta}/validation_curves.h5
+
+    transforms:
+      _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: masif.data.preprocessings.table_transforms.LC_NAFill
+        - _target_: masif.data.preprocessings.table_transforms.Convert
+        - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+
+
+valid_dataset_class: # -----------------------------------------------------------------------------
+  _target_: masif.data.Dataset_Join_Test
+  meta_dataset: ${dataset.dataset_meta}
+  #  meta_algo: ${dataset.algo_meta}
+  learning_curves: # ${dataset.lc_meta}
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: masif.data.Dataset_LC
+    path: ${dataset.path.lc_meta}/validation_curves.h5
+
+    transforms:
+      _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: masif.data.preprocessings.table_transforms.LC_NAFill
+        - _target_: masif.data.preprocessings.table_transforms.Convert
+        - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+
+  test_curves: # ${dataset.lc_meta}
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: masif.data.Dataset_LC
+    path: ${dataset.path.lc_meta}/test_curves.h5
+
+    transforms:
+      _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: masif.data.preprocessings.table_transforms.LC_NAFill
+        - _target_: masif.data.preprocessings.table_transforms.Convert
+        - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+
+test_dataset_class: # -----------------------------------------------------------------------------
+  _target_: masif.data.Dataset_Join_Test
+  meta_dataset: ${dataset.dataset_meta}
+  #  meta_algo: ${dataset.algo_meta}
+  learning_curves: # ${dataset.lc_meta}
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: masif.data.Dataset_LC
+    path: ${dataset.path.lc_meta}/validation_curves.h5
+
+    transforms:
+      _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: masif.data.preprocessings.table_transforms.LC_NAFill
+        - _target_: masif.data.preprocessings.table_transforms.Convert
+        - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+
+  test_curves: # ${dataset.lc_meta}
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: masif.data.Dataset_LC
+    path: ${dataset.path.lc_meta}/test_curves.h5
+
+    transforms:
+      _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: masif.data.preprocessings.table_transforms.LC_NAFill
+        - _target_: masif.data.preprocessings.table_transforms.Convert
+        - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+
+
+# Dataloaders ------------------------------------------------------------------------------------
+train_dataloader_class:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 5  # introduce randomness for iterative algos
+  shuffle: True
+  num_workers: ${num_workers}
+
+valid_dataloader_class:
+  _target_: torch.utils.data.DataLoader
+  batch_size: ${dynamically_computed.n_datasets} # average over validation datasets in one go
+  shuffle: True
+  num_workers: ${num_workers}
+
+test_dataloader_class:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 1 # average over test datasets in one go
+  shuffle: False
+  num_workers: ${num_workers}
+
+
+# (Raw Dataset choices) ----------------------------------------------------------------------------
+
+
+dataset_raw:
+  _target_: masif.data.openml.raw_pipe.raw_pipe
+
+  #TODO Change to relative
+  enable: False # whether to override the preprocessing
+  database_path: ${dir_data}/downloads/openml/conference_tmlr2022_1.db
+  path_to_output_files: ${dir_data}/preprocessed/openml/conference_tmlr2022_1
+  table_name: openmlcc18_learning_curve_data

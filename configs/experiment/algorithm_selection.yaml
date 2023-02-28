@@ -1,0 +1,92 @@
+# @package _global_
+
+
+#Workshop paper version of the masif model: https://arxiv.org/pdf/2206.03130.pdf
+#MLP1(D) = h_0 -> for_{i=0,..k}  LSTM(h_i, f_i)=h_{i+1}  -> MLP2(h_k) = output
+#
+#D: dataset meta-features
+#f_i: performances of all n (=algo_dim) algorithms on the i-th fidelity
+#
+#The dimensions of the model are the following:
+#MLP1: input_dim -> mlp1_hidden_dims -> h_dim
+#LSTM: h_dim -> h_dim
+#MLP2: h_dim -> mlp2_hidden_dims -> algo_dim
+
+defaults:
+  - /model: satzilla11
+  #- override /dataset: lcbench
+  #- override /dataset/dataset_meta: lcbench_minimal
+  # - override /dataset/algo_meta: lcbench_minimal
+
+
+
+wandb:
+  group: 'satzilla_11'
+  job_type: 'satzilla_11'
+  notes: 'satzilla_11'
+  tags:
+    - 'SATzilla11'
+
+
+dataset:
+  slices: -1 # FIXME: fidelity slice to evaluate on!
+  train_dataset_class:
+    _target_: masif.data.dataset_join.dataset_join_bulk.Dataset_join_classicAS
+
+  valid_dataset_class: Null
+
+  test_dataset_class:
+    _target_: masif.data.dataset_join.dataset_join_bulk.Dataset_join_classicAS
+
+  train_dataloader_class:
+    shuffle: True
+    # batch will be smaller (since len(dataset) < batch_size)
+    # and getitem will be called at most len(dataset)
+    batch_size: ${dynamically_computed.n_datasets}
+  
+  valid_dataloader_class: Null 
+
+  test_dataloader_class:
+    shuffle: False
+    # batch will be smaller (since len(dataset) < batch_size)
+    # and getitem will be called at most len(dataset)
+    batch_size: ${dynamically_computed.n_datasets}
+
+
+model:
+  _target_: masif.models.baselines.satzilla11.SATzilla11
+  max_fidelity: ${dataset.slices} # ${range:1,51,1} # FIXME: adjust to the values of dataset.slices up until the
+  device: 'cpu'
+
+
+trainer:
+  trainerobj:
+    _target_: masif.trainer.base_trainer.BaseTrainer
+
+  run_call:
+    epochs: 1
+    log_freq: 1
+
+    test_loss_fns:
+
+      placeholder:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 1
+
+      top1_regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 1
+      top1regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 1
+
+      top3_regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 3
+
+      top5_regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 5
+
+
+

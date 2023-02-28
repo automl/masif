@@ -1,0 +1,58 @@
+_target_: masif.models.transformerMLP.masifTransformerMLP
+
+n_algos: ${dynamically_computed.n_algos}
+n_fidelities: ${dynamically_computed.n_fidelities}
+
+decoder_hidden_dims: [ 100 ] # this is only intermediate layers
+dataset_metaf_encoder:
+  _target_: masif.utils.mlp.MLP
+  hidden_dims: # careful changes here imply that lc_encoder_layer.dim_dataset_metaf_encoding is also changed
+    - ${dynamically_computed.n_data_meta_features}
+    - 100  # arbitrary value
+
+positional_encoder:
+  _target_: masif.utils.positionalencoder.PositionalEncoder
+  d_model: ${dynamically_computed.n_fidelities}
+  max_len: 200  # arbitrary - as long as it's longer than the longest fidelity sequence
+  dropout: 0.1
+
+
+transformer_lc:
+  _target_: masif.models.masif_transformer_guided_attention.masifGuidedAttentionTransformerEncoder
+
+  num_layers: 2
+  metaf_embed_dim: 100 # same as the last element of dataset_metaf_encoder.hidden_dims
+  l_seq:
+    - ${dynamically_computed.n_fidelities}
+    - 1
+
+  hidden_dims: # optional argument, to specify intermediate layers in the guided attention mlp acting on the attention
+    - 100
+
+  encoder_layer:
+
+    _target_: masif.models.masif_transformer_guided_attention.GuidedAttentionTransformerEncoderLayer
+    _partial_: True
+
+
+    #      hidden_dims:
+    #        - ${model.dataset_metaf_encoder.hidden_dims[1]}
+    #        - ${dynamically_computed.n_fidelities} # + 1! # + 1 because of nan-safeguard
+
+
+
+    d_model: 1  # batch trick: look at every curve one at a time to allow appropriate masking
+    nhead: 1 # attention heads  d_model / nhead = 1 must be divisible
+    dim_feedforward: 100
+    dropout: 0.1
+    activation: relu
+
+    batch_first: True
+    norm_first: False
+    device: ${device}
+
+  norm:
+    _target_: torch.nn.LayerNorm
+    normalized_shape: ${model.transformer_lc.encoder_layer.d_model}
+
+device: ${device}

@@ -1,0 +1,66 @@
+# @package _global_
+
+# The general idea here is, that SuccessiveHalving is a non-parametric, myopic, but
+# learning curve aware algorithm.
+# Since we only ever care for its baseline (test) performance, this pipe is a bit hacky.
+
+
+wandb:
+  group: 'RandomBaselineFIXED'
+  job_type: 'random fixed'
+  notes: 'Random Baseline Fixed'
+
+device: 'cpu'
+
+model:
+  _target_: masif.models.baselines.randombaseline.RandomBaseline
+
+
+dataset:
+  test_dataloader_class:
+    batch_size: 1000 # has to be one for successive halving. aggregate over test set in trainer.evaluate
+    shuffle: False # to know on which dataset in test we perform badly
+
+trainer:
+  trainerobj:
+    _target_: masif.trainer.random_trainer.RandomTrainer
+    reps: 1000
+  run_call:
+    epochs: 0 # since we only need a single test execution anyways (HACK)
+
+    test_loss_fns:
+      #   spearman:
+      #      _target_: masif.losses.spearman.SpearmanLoss
+
+      #   plackett_luce:
+      #      _target_: masif.losses.plackett_luce.PlackettLuceLoss
+      #      k: 10
+
+      #   neuralNDCG:
+      #      _target_: allrank.models.losses.neuralNDCG
+      #      _partial_: True
+      #      padded_value_indicator: -1
+      #      temperature: 1.
+      #      powered_relevancies: True
+      #      k: 10
+      #      stochastic: False
+      #      n_samples: 32
+      #      beta: 0.1
+      #      log_scores: True
+
+      top1_regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 1
+
+      top3_regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 3
+
+      top5_regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 5
+
+  #    test_loss_fns:
+  #      spearman:
+  #        #        _target_: masif.losses.plackett_luce.PlackettLuceLoss
+  #        _target_: masif.losses.spearman.SpearmanLoss

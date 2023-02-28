@@ -1,0 +1,87 @@
+# @package _global_
+
+
+# algorithms selector with the fidelity values as an additional feature. Here we made a simplified version:
+# we train multiple AS models whereas each model is trained with different amount of fidelity values.
+# we made a slice evaluation protocol at the test time. and each time we only use the model trained with the largest
+# possible fidelity values
+defaults:
+  # - /model: AugmentedSATzilla11
+  - override /dataset: lcbench
+  - override /dataset/dataset_meta: lcbench_minimal
+  # - override /dataset/algo_meta: lcbench_minimal
+  - override /train_test_split: trainvalfixedtest
+
+wandb:
+  group: 'augmented satzilla_11'
+  job_type: 'satzilla_11+'
+  notes: 'augmented satzilla_11'
+  tags:
+    - 'Augmented SATzilla11'
+
+
+dataset:
+
+  train_dataset_class:
+    _target_: masif.data.Dataset_Join_Dmajor
+    masking_fn: null
+
+  valid_dataset_class:
+    _target_: masif.data.Dataset_Join_Test
+
+  test_dataset_class:
+    _target_: masif.data.Dataset_Join_Test
+
+  train_dataloader_class:
+    shuffle: True
+    # batch will be smaller (since len(dataset) < batch_size)
+    # and getitem will be called at most len(dataset)
+    batch_size: ${dynamically_computed.n_datasets}
+
+  valid_dataloader_class:
+    shuffle: False
+    batch_size: ${dynamically_computed.n_datasets}
+
+  test_dataloader_class:
+    shuffle: False
+    # batch will be smaller (since len(dataset) < batch_size)
+    # and getitem will be called at most len(dataset)
+    batch_size: ${dynamically_computed.n_datasets}
+
+
+model:
+  _target_: masif.models.baselines.augmented_satzilla11.MultiAugmentedSATzilla11
+  max_fidelity: 50 # ${range:1,51,1} # FIXME: adjust to the values of dataset.slices up until the
+  device: 'cpu'
+  n_estimators: 50
+
+
+
+trainer:
+  trainerobj:
+    _target_: masif.trainer.base_trainer.BaseTrainer
+
+  run_call:
+    epochs: 1
+    log_freq: 1
+
+    test_loss_fns:
+
+      placeholder:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 1
+
+      top1_regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 1
+      top1regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 1
+
+      top3_regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 3
+
+      top5_regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 5

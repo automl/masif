@@ -1,0 +1,63 @@
+# @package _global_
+
+# MLP(D) ---> NeuralNDCG@k
+# FIXME: requires a 'python -m pip install git+https://github.com/allegro/allRank' install
+
+defaults:
+  - /model: mlp_D
+
+wandb:
+  notes: 'neuralNDCG test'
+
+dataset:
+
+  train_dataloader_class:
+    batch_size: 10
+    shuffle: True
+
+  test_dataloader_class:
+    batch_size: 10
+    shuffle: False
+
+
+hydra:
+  job:
+    env_set:
+      CUDA_VISIBLE_DEVICES: ""
+
+trainer:
+
+  run_call:
+    epochs: 10
+    train_loss_fn:
+      #      _target_: masif.losses.plackett_luce.PlackettLuceLoss
+      #      k: 10
+      #      _target_: masif.losses.spearman.SpearmanLoss
+
+      # Documentation: https://github.com/allegro/allRank/blob/master/allrank/models/losses/neuralNDCG.py
+      _target_: allrank.models.losses.neuralNDCG
+      #    """
+      #    NeuralNDCG loss introduced in "NeuralNDCG: Direct Optimisation of a Ranking Metric via Differentiable
+      #    Relaxation of Sorting" - https://arxiv.org/abs/2102.07831. Based on the NeuralSort algorithm.
+      #    :param y_pred: predictions from the model, shape [batch_size, slate_length]
+      #    :param y_true: ground truth labels, shape [batch_size, slate_length]
+      #    :param padded_value_indicator: an indicator of the y_true index containing a padded item, e.g. -1
+      #    :param temperature: temperature for the NeuralSort algorithm
+      #    :param powered_relevancies: whether to apply 2^x - 1 gain function, x otherwise
+      #    :param k: rank at which the loss is truncated
+      #    :param stochastic: whether to calculate the stochastic variant
+      #    :param n_samples: how many stochastic samples are taken, used if stochastic == True
+      #    :param beta: beta parameter for NeuralSort algorithm, used if stochastic == True
+      #    :param log_scores: log_scores parameter for NeuralSort algorithm, used if stochastic == True
+      #    :return: loss value, a torch.Tensor
+      #    """
+      _partial_: True
+      padded_value_indicator: -1
+      temperature: 1.
+      powered_relevancies: True
+      k: 10
+      stochastic: False
+      n_samples: 32
+      beta: 0.1
+      log_scores: True
+

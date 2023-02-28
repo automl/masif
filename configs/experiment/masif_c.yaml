@@ -1,0 +1,57 @@
+# @package _global_
+
+# Transformer model.
+# d = MLP_d(D), t = TransformerEncoder(lcs_DA), output = MLP(concat(d,t))
+
+defaults:
+  - /model: masif_c_transformer
+
+
+wandb:
+  group: 'masif_C_transformerNEW'
+  job_type: 'train'
+  notes: 'masif C transformer'
+  tags:
+    - 'masif C Transformer New'
+
+
+dataset:
+  train_dataset_class:
+    _target_: masif.data.Dataset_Join_Dmajor
+    # enable masking
+    masking_fn:
+      _partial_: True
+      _target_: masif.utils.masking.mask_lcs_randomly
+
+
+#   train_dataloader_class:
+#     batch_size: 10
+
+#   valid_dataloader_class:
+#     batch_size: 100
+
+#   test_dataloader_class:
+#     batch_size: 100
+
+
+
+trainer:
+  run_call:
+    epochs: 500
+    log_freq: 5         # wandb mistakes single value additions as media files, so log_freq helps mitigate that
+    train_loss_fn:
+      _target_: masif.losses.spearman.SpearmanLoss
+
+    test_loss_fns:
+
+      top1_regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 1
+
+      top3_regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 3
+
+      top5_regret:
+        _target_: masif.evaluation.topkregret.TopkRegret
+        k: 5

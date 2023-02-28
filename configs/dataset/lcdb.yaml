@@ -1,0 +1,141 @@
+defaults:
+  - dataset_meta: lcdb_minimal
+  - lc_meta: NULL # IRRELEVANT (had to be overritten in here)
+  - algo_meta: NULL
+
+name: lcdb
+
+path:
+  data_meta: ${dir_data_processed}/lcdb/lcdb_meta.csv
+  lc_meta: ${dir_data_processed}/lcdb
+  algo_meta: ${dir_data_processed}/lcdb
+
+
+
+train_dataset_class: # -----------------------------------------------------------------------------
+  _target_: masif.data.Dataset_Join_Dmajor
+  meta_dataset: ${dataset.dataset_meta}
+  #  meta_algo: ${dataset.algo_meta}
+  learning_curves: # ${dataset.lc_meta}
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: masif.data.Dataset_LC
+    path: ${dataset.path.lc_meta}/valid_lcs.h5
+
+    transforms:
+      _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: masif.data.preprocessings.table_transforms.LC_NAFill
+          axis: 1
+        - _target_: masif.data.preprocessings.table_transforms.Convert
+        - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+
+
+
+
+valid_dataset_class: # -----------------------------------------------------------------------------
+  _target_: masif.data.Dataset_Join_Test
+  meta_dataset: ${dataset.dataset_meta}
+  #  meta_algo: ${dataset.algo_meta}
+  learning_curves: # ${dataset.lc_meta}  # validation
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: masif.data.Dataset_LC
+    path: ${dataset.path.lc_meta}/valid_lcs.h5
+
+    transforms:
+      _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: masif.data.preprocessings.table_transforms.LC_NAFill
+          axis: 1
+        - _target_: masif.data.preprocessings.table_transforms.Convert
+        - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+
+  test_curves: # ${dataset.lc_meta}
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: masif.data.Dataset_LC
+    path: ${dataset.path.lc_meta}/test_lcs.h5
+
+    transforms:
+      _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: masif.data.preprocessings.table_transforms.LC_NAFill
+          axis: 1
+        - _target_: masif.data.preprocessings.table_transforms.Convert
+        - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+
+
+
+
+test_dataset_class: # ------------------------------------------------------------------------------
+  _target_: masif.data.Dataset_Join_Test
+  meta_dataset: ${dataset.dataset_meta}
+  #  meta_algo: ${dataset.algo_meta}
+  learning_curves: # ${dataset.lc_meta}  # validation
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: masif.data.Dataset_LC
+    path: ${dataset.path.lc_meta}/valid_lcs.h5
+
+    transforms:
+      _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: masif.data.preprocessings.table_transforms.LC_NAFill
+          axis: 1
+        - _target_: masif.data.preprocessings.table_transforms.Convert
+        - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+
+
+  test_curves: # ${dataset.lc_meta}
+    # FIXME: move this back to lc_meta (but make metric accessible from here!
+    _target_: masif.data.Dataset_LC
+    path: ${dataset.path.lc_meta}/test_lcs.h5
+
+    transforms:
+      _target_: masif.data.preprocessings.transformpipeline.TransformPipeline
+      modulelist:
+        - _target_: masif.data.preprocessings.table_transforms.LC_NAFill
+          axis: 1
+        - _target_: masif.data.preprocessings.table_transforms.Convert
+        - _target_: masif.data.preprocessings.lc_slice.LC_TimeSlices
+          slices: ${dataset.slices}
+
+
+
+
+
+# test_dataset_class: # unavailable! because yahpo did not collect these
+
+
+train_dataloader_class:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 1
+  shuffle: True
+  num_workers: ${num_workers}
+
+valid_dataloader_class:
+  _target_: torch.utils.data.DataLoader
+  batch_size: ${dynamically_computed.n_datasets}
+  shuffle: False
+  num_workers: ${num_workers}
+
+test_dataloader_class:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 1
+  shuffle: False
+  num_workers: ${num_workers}
+
+slices: [ 16,32,45,64,128,181,256,362,512,724,1024,1448,2048,2896,4096,8192,11585,16384,23170,32768,65536 ]
+
+dataset_raw:
+  _target_: masif.data.lcdb.raw_pipe.raw_pipe
+  enable: False
+  metric: accuracy
+
+  # actual parameters
+  threshold: 34
+  inner_seed: 0
+  outer_seed: 0
+  size_test: 5000
+

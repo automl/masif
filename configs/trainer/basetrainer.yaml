@@ -1,0 +1,60 @@
+trainerobj:
+  _target_: masif.trainer.BaseTrainer
+  optimizer:
+    _partial_: true
+    _target_: torch.optim.Adam
+    lr: 0.001
+
+run_call:
+  epochs: 0
+  log_freq: 2
+
+  train_loss_fn: Null
+
+  valid_loss_fns:
+    spearman:
+      _target_: masif.losses.spearman.SpearmanLoss
+
+    top1regret:
+      _target_: masif.evaluation.topkregret.TopkRegret
+      k: 1
+
+    top3_regret:
+      _target_: masif.evaluation.topkregret.TopkRegret
+      k: 3
+
+    top5_regret:
+      _target_: masif.evaluation.topkregret.TopkRegret
+      k: 5
+
+  #test_loss_fns:
+    #   spearman:
+    #      _target_: masif.losses.spearman.SpearmanLoss
+
+    #   plackett_luce:
+    #      _target_: masif.losses.plackett_luce.PlackettLuceLoss
+    #      k: 10
+
+    #   neuralNDCG:
+    #      _target_: allrank.models.losses.neuralNDCG
+    #      _partial_: True
+    #      padded_value_indicator: -1
+    #      temperature: 1.
+    #      powered_relevancies: True
+    #      k: 10
+    #      stochastic: False
+    #      n_samples: 32
+    #      beta: 0.1
+    #      log_scores: True
+
+    #top1_regret:
+    #  _target_: masif.evaluation.topkregret.TopkRegret
+    #  k: 1
+
+    #top3_regret:
+    #  _target_: masif.evaluation.topkregret.TopkRegret
+    #  k: 3
+
+    #top5_regret:
+    #  _target_: masif.evaluation.topkregret.TopkRegret
+    #  k: 5

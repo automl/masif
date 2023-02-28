@@ -1,0 +1,117 @@
+defaults:
+  - dataset_meta: lcbench_minimal
+  - lc_meta: multi_slice
+#  - algo_meta: yahpo_lcbench_minimal
+
+
+name: yahpo
+
+
+path:
+  algo_meta: ${dir_data_processed}/yahpo_data/${dataset.dataset_raw.selection.bench}/config_subset.csv
+  data_meta: ${dir_data_processed}/yahpo_data/${dataset.dataset_raw.selection.bench}/meta_features.csv
+  lc_meta: ${dir_data_processed}/yahpo_data/${dataset.dataset_raw.selection.bench}/logs_subset.h5
+
+
+train_dataset_class:
+  _target_: masif.data.Dataset_Join_Dmajor
+  meta_dataset: ${dataset.dataset_meta}
+  #  meta_algo: ${dataset.algo_meta}
+  learning_curves: ${dataset.lc_meta}
+
+valid_dataset_class:
+  _target_: masif.data.Dataset_Join_Dmajor
+  meta_dataset: ${dataset.dataset_meta}
+  #  meta_algo: ${dataset.algo_meta}
+  learning_curves: ${dataset.lc_meta}
+
+
+test_dataset_class:
+  _target_: masif.data.Dataset_Join_Dmajor
+  meta_dataset: ${dataset.dataset_meta}
+  #  meta_algo: ${dataset.algo_meta}
+  learning_curves: ${dataset.lc_meta}
+
+# test_dataset_class: # unavailable! because yahpo did not collect these
+
+
+train_dataloader_class:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 1
+  shuffle: True
+  num_workers: ${num_workers}
+
+valid_dataloader_class:
+  _target_: torch.utils.data.DataLoader
+  batch_size: ${dynamically_computed.n_datasets}
+  shuffle: False
+  num_workers: ${num_workers}
+
+test_dataloader_class:
+  _target_: torch.utils.data.DataLoader
+  batch_size: ${dynamically_computed.n_datasets}
+  shuffle: False
+  num_workers: ${num_workers}
+
+
+
+
+# (Raw Dataset choices) ----------------------------------------------------------------------------
+
+# fidelity space slices
+slices: [ 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1. ] # ${range:0.1, 1.1, 0.1} fixme: check if that worked!
+
+# For LC Bench, use the slices [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 51]
+
+# fixme: look at multi-slice behaviour
+#lc_meta:
+#  metric: None
+
+dataset_raw:
+  _target_: masif.data.yahpo.raw_pipe.raw_pipe
+  enable: False  # CAREFULL: changing anything below will have to be enabled in the pipe beforehand!
+  dir_data: data
+  fidelity_type: trainsize
+
+  selection:
+    bench: rbv2_glmnet
+    # options:
+    # lcbench, rbv2_svm, rbv2_ranger, rbv2_rpart, rbv2_glmnet, rbv2_xgboost, rbv2_aknn, rbv2_super
+
+    # carefull, iaml_* do not have a proper openmlid and are therefor not available:
+    # iaml_ranger, iaml_rpart, iaml_glmnet, iaml_xgboost, iaml_super,
+
+    fidelity_type: ${dataset.dataset_raw.fidelity_type}
+    # options: 'trainsize', 'repl' for iaml_* & rbv2_*
+    # 'epoch' for lcbench
+
+    noisy: false # whether the benchmark should produce noisy observations (see yahpo benchmark)
+
+    n_algos: 50 # number of algorithms to draw! (same config across all datasets of bench)
+    algo: # selection procedure of configs in surrogate benchmarks
+      _target_: smac.initial_design.latin_hypercube_design.LHDesign
+      # smac.initial_design.sobol_design.SobolDesign
+      rng:
+        _target_: numpy.random.RandomState
+        seed: ${seed}
+
+      # unimportant parameters!
+      ta_run_limit: 9999
+      init_budget: ${dataset.dataset_raw.selection.n_algos}
+
+    # fidelity depends on fidelity type & ranges for respective benchmark
+    slices: ${dataset.slices}
+
+    lc_metric: f1 # fixme: be consistent with lc_bench with this argument
+    # lcbench options:
+    # time , val_accuracy , val_cross_entropy , val_balanced_accuracy ,
+    # test_cross_entropy , test_balanced_accuracy
+
+    # rbv2_svm options:
+    #  'acc', 'bac', 'auc', 'brier', 'f1', 'logloss', 'timetrain',
+    #  'timepredict', 'memory'
+
+    # iaml_ranger options:
+  #  [ 'mmce', 'f1', 'auc', 'logloss', 'ramtrain', 'rammodel', 'rampredict',
+  #    'timetrain', 'timepredict', 'mec', 'ias', 'nf' ],
+

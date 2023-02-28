@@ -1,0 +1,7 @@
+_target_: masif.models.baselines.satzilla11.SATzilla11
+max_fidelity: ${dataset.slices} # ${range:1,51,1} # FIXME: adjust to the values of dataset.slices up until the
+device: 'cpu'
+n_estimators: 50
+max_features: 'log2' # Allowed string values are 'auto', 'sqrt' or 'log2'
+n_jobs: 5
+random_state: 0

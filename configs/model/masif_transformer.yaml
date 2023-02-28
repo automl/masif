@@ -1,0 +1,48 @@
+_target_: masif.models.masif_transformer.masifBaseTransformer
+
+dataset_metaf_encoder:
+  _target_: masif.utils.mlp.MLP
+
+  #  [ ${ dynamically_computed.n_data_meta_features }, 200, 100 ]
+  activation: 'relu'
+  hidden_dims:
+    - ${ dynamically_computed.n_data_meta_features }
+    - 256
+    - 128
+
+algo_metaf_encoder:
+  _target_: masifs.util.mlp.MLP
+
+  activation: 'relu'
+  hidden_dims:
+    - ${ dynamically_computed.n_algos }
+    - 256
+    - 128
+
+n_algos: ${dynamically_computed.n_algos}
+n_fidelities: ${dynamically_computed.n_fidelities}
+n_layers: 2
+
+transformer_layer:
+  _target_: masif.models.masif_transformer_guided_attention.masifGuidedAttentionTransformerEncoder
+  dataset_metaf_embed_dim: 128 # same as the last element of dataset_metaf_encoder.hidden_dims
+  d_model: 128
+  nhead: 4
+  n_fidelities: ${dynamically_computed.n_fidelities}
+  dim_feedforward: 256
+  dropout: 0.2
+  activation: 'relu'
+  batch_first: True
+  norm_first: True
+
+decoder:
+  _target_: masif.utils.mlp.MLP
+
+  #  [ ${ add: ${ model.encoder.hidden_dims[ 0 ] }, ${ transformer_dims[ 0 ] } }, 200, 100 ] # fixme: change index
+  activation: 'relu'
+
+  hidden_dims:
+    # - ${add:dynamically_computed.n_algos,dynamically_computed.n_algos}
+    - 128               # FIXME: dynamically compute based on the
+    # concat dim before the tensor comes to the decoder
+    - ${dynamically_computed.n_algos}

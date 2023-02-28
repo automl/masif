@@ -1,0 +1,3 @@
+# Fixme: interface supports only train, valid, test split
+_target_: masif.utils.traintestsplit.train_test_split
+share: 0.8
