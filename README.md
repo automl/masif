@@ -64,4 +64,4 @@ to generate an optimized parameteric curve sets for one particular dataset. Then
 python masif/models/baselines/synthetic_parameteric_curves.py
 ```
 
-to generate the synthetic dataset
+The synthetic dataset used in our experiment can be found under `data/preprocessed/Synthetic/synthetic_func.npy`
