@@ -50,3 +50,4 @@ python main.py '+experiment=masif_h'+model.model_opts=['reduce','pe_g','d_meta_g
 ```
 
 The project extensively uses [hydra](https://hydra.cc/docs/intro/) for configurations and [Weights and Biases](https://wandb.ai/site) for tracking experiments. Please set-up the project and account on this and then update ```configs/base.yaml``` with the ```entity``` and ```project_name``` fields for running full tests. 
+Notice, that all the experiments can be found in bashfiles/masif
