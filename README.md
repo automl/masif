@@ -51,3 +51,17 @@ python main.py '+experiment=masif_h'+model.model_opts=['reduce','pe_g','d_meta_g
 
 The project extensively uses [hydra](https://hydra.cc/docs/intro/) for configurations and [Weights and Biases](https://wandb.ai/site) for tracking experiments. Please set-up the project and account on this and then update ```configs/base.yaml``` with the ```entity``` and ```project_name``` fields for running full tests. 
 Notice, that all the experiments can be found in bashfiles/masif
+
+
+## Generate synthetic data 
+To generate synthetic data, you can first call the scipt
+```bash
+python masif/models/baselines/lcdb_parametric_best_lc.py
+```
+
+to generate an optimized parameteric curve sets for one particular dataset. Then you need to call 
+```bash
+python masif/models/baselines/synthetic_parameteric_curves.py
+```
+
+to generate the synthetic dataset

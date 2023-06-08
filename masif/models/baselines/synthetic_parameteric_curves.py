@@ -595,10 +595,6 @@ if __name__ == "__main__":
     lc_predictor.plot_curves(x=lc_predictor.budgets, ax=plt.gca())
     plt.show()
 
-    import pdb
-
-    pdb.set_trace()
-
     new_curves_generator = SyntheticFuncMetaDatasets(budgets, restarts=200, seed=1)
     new_curves_generator.fit(lc_predictor.parametric_lcs)
 
